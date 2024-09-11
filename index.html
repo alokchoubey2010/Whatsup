@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase User List</title>
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <!-- Firebase Database SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: poppins;
+        list-style: none;
+      }
+
+      body{
+        background: #1c1f2b;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        flex-direction: column;
+        gap: 14px;
+      }
+      
+      .input{
+        width: fit-content;
+        height: fit-content;
+        position: relative;
+      }
+      
+      .input input{
+        padding: 10px 20px;
+        border: 2px solid #465EFC;
+        background: #1c1f2b;
+        border-radius: 8px;
+        outline: none;
+        transition: all .7s;
+        color: #fff;
+        width: 335px;
+      }
+      
+      .input span.label{
+        position: absolute;
+        top: 10px;
+        left: 18px;
+        font-size: 14px;
+        opacity: .956;
+        transition: .4s;
+      }
+      
+      .input input:focus ~ span.label,
+      .input input:valid ~ span.label{
+        transform: translateX(6px) translateY(-19px);
+        font-size: 12px;
+        text-transform: uppercase;
+        border-left: 1.5px solid #465EFC;
+        border-right: 1.5px solid #465EFC;
+        color: #465EFC;
+        text-shadow: 0 0 10px #465EFC;
+        background: #1c1f2b;
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+      
+      button{
+        padding: 10px 20px;
+        width: 335px;
+        border-radius: 8px;
+        border: 2px solid #465EFC;
+        background: #1c1f2b;
+        color: white;
+        position: relative;
+      }
+      
+      button::before{
+        position: absolute;
+        top: 0;
+        left: 0;
+        content: "Welcome User";
+        font-size: 14px;
+        border-radius: inherit;
+        color: black;
+        background: #fff;
+        width: 0%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        white-space: nowrap;
+        z-index: 10;
+      }
+      
+      @keyframes slide{
+        from{
+          width: 0%;
+        }
+        to{
+          width: 100%;
+        }
+      }
+      
+      button:active ~ button::before{
+        animation: .7s slide forwards;
+      }
+
+      .user-list {
+        margin-top: 20px;
+        padding: 10px;
+        background: #2a2e3b;
+        border-radius: 8px;
+        width: 335px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .user-list-item {
+        border-bottom: 1px solid #465EFC;
+        padding: 10px;
+        color: #fff;
+      }
+
+    </style>
+</head>
+<body>
+    <!-- Form to get user input -->
+    <div class="input">
+      <input type="text" id="name" required>
+      <span class="label">Your Name</span>
+    </div>
+    <div class="input">
+      <input type="email" id="email" required>
+      <span class="label">Your Email</span>
+    </div>
+    <button onclick="addUser()">Add User</button>
+
+    <!-- Div to display the list of users -->
+    <div id="userList" class="user-list">
+      <center><h2 style='font-weight: 500; font-size: 18px;'>Already Enrolled</h2></center>
+    </div>
+
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyBtNChab23CAv6HmiJnMmyKb5ALQSOIn4s",
+          authDomain: "group-chat-neuron-nerds.firebaseapp.com",
+          databaseURL: "https://group-chat-neuron-nerds-default-rtdb.firebaseio.com",
+          projectId: "group-chat-neuron-nerds",
+          storageBucket: "group-chat-neuron-nerds.appspot.com",
+          messagingSenderId: "900309631047",
+          appId: "1:900309631047:web:583c5dce923fd4d43ff162"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Function to add user to Firebase database
+        function addUser() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+
+            if (name && email) {
+                // Push new user data to the "users" collection in the database
+                database.ref('users/').push({
+                    name: name,
+                    email: email
+                }).then(() => {
+                    alert("Hey " + name +  ", you are added successfully!");
+                    fetchUsers(); // Refresh the user list
+                }).catch((error) => {
+                    console.error("Error adding user: ", error);
+                });
+            } else {
+                alert("Please enter both name and email.");
+            }
+        }
+
+        // Function to fetch and display users from Firebase database
+        function fetchUsers() {
+            const userListDiv = document.getElementById('userList');
+            // userListDiv.innerHTML = ""; // Clear existing content
+
+            database.ref('users/').on('value', (snapshot) => {
+                const users = snapshot.val();
+                if (users) {
+                    Object.keys(users).forEach((key) => {
+                        const user = users[key];
+                        const userDiv = document.createElement('div');
+                        userDiv.className = 'user-list-item';
+                        userDiv.innerText += `${user.name}: `;
+                        userDiv.innerText += `${user.email}`;
+                        userListDiv.appendChild(userDiv);
+                    });
+                } else {
+                    userListDiv.innerHTML = "<p>No users found.</p>";
+                }
+            });
+        }
+
+        // Fetch users when the page loads
+        window.onload = fetchUsers;
+    </script>
+</body>
+</html>
